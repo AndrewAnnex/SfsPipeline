@@ -549,9 +549,10 @@ qsub -m n -r n -N sfs_blend -W group_list=$groupName -j oe -S /bin/bash \
   -- sfs_blend.sh ref/lola_1mpp.tif sfs_dem.tif max_lit.tif $(pwd)
 ```
 
-`sfs_blend.sh` now defaults to `SHADOW_FILL_MODE=lola-curved`, which keeps the
-SfS in the holes but caps it (and LOLA) by a floor grown from the surrounding
-SfS, so LOLA can no longer pop up above the terrain. This needs an ASP build with `sfs_blend
+`sfs_blend.sh` now defaults to `SHADOW_FILL_MODE=lola-curved`, which fills the
+holes with the per-pixel minimum of the SfS, LOLA, and a surface grown from the
+surrounding SfS that curves gently downward, so LOLA can no longer pop up above
+the terrain. This needs an ASP build with `sfs_blend
 --shadow-fill-mode` (committed 2026-10, landing in the nightly soon). On an older
 build the job fails with an unknown-option error. Set `SHADOW_FILL_MODE=lola` for
 the original behavior on any build.

@@ -12,7 +12,8 @@
 # Inspect the blended result. If a shadowed area needs a touch-up, re-blend a
 # padded clip and merge it back with dem_mosaic --priority-blending-length (see
 # WORKFLOW.md and the sfs-blend skill). The sfs_blend --shadow-fill-mode option
-# can also grow a smooth floor from the surrounding SfS instead of using LOLA.
+# can also fill holes with a surface grown from the surrounding SfS that curves
+# gently downward, instead of using LOLA.
 #
 # Args:
 #   refDem    reference DEM (e.g. the LOLA regrid), defines the output grid
@@ -31,9 +32,9 @@
 #   CACHE_SIZE_MB        ASP cache size in MB (default 4096)
 #   THREADS              sfs_blend threads (default: all cores, nproc)
 #   USE_VRT              regrid via VRT to match reference (default 0)
-#   SHADOW_FILL_MODE     hole fill: lola, curved, sfs-curved, lola-curved
+#   SHADOW_FILL_MODE     hole fill: lola, curved, lola-curved
 #                        (default lola-curved; lola is the original behavior)
-#   SHADOW_FILL_MAX_DIAMETER  max hole diameter in pixels for the grown floor
+#   SHADOW_FILL_MAX_DIAMETER  max hole diameter in pixels for the curved surface
 #                        (default 300)
 
 if [ "$#" -lt 4 ]; then
@@ -58,9 +59,10 @@ shadowThresh=${SHADOW_THRESHOLD:-0.005}
 minBlendSize=${MIN_BLEND_SIZE:-25}
 cacheSize=${CACHE_SIZE_MB:-4096}
 useVrt=${USE_VRT:-0}
-# Default to lola-curved: keep the SfS in the holes but cap it (and LOLA) by a
-# floor grown from the surrounding SfS, so LOLA can no longer pop up above the
-# terrain, with the matching feather (lit 20, shadow 20, sigma 10). This needs an
+# Default to lola-curved: the per-pixel minimum of the SfS, LOLA, and a surface
+# grown from the surrounding SfS that curves gently downward, so LOLA can no
+# longer pop up above the terrain, with the matching feather (lit 20, shadow 20,
+# sigma 10). This needs an
 # ASP build with sfs_blend --shadow-fill-mode. On an older build the job fails
 # with an unknown option. Set SHADOW_FILL_MODE=lola for the original LOLA fill on
 # any build.
