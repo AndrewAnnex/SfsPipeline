@@ -56,7 +56,11 @@ while [ 1 ]; do
   #   NCPUS     - cpus per node (default 28 for bro_ele;
   #               256 for tur_ath)
   #   WALLTIME  - walltime (default 6:00:00)
-  #   CHUNK_SIZE - number of images per job (default 30)
+  #   RERUNNABLE - qsub -r flag (default y): a node init-abort auto-requeues the
+  #               chunk onto a fresh node instead of killing it. mapproject is
+  #               idempotent, so this is safe. Set RERUNNABLE=n only if you must.
+  #   CHUNK_SIZE - number of images per job (default 30; keep this fixed value,
+  #               do not override per-run)
   #   IMG_DIR / IMG_EXT - forwarded to workers (defaults img / .cal.echo.cub)
   #   TR        - fixed grid resolution in meters/pixel (e.g. TR=0.5)
   #   TR_COL    - column in imageList holding per-image GSD
@@ -73,14 +77,18 @@ while [ 1 ]; do
   # Build the -v list from only the variables that are actually set. The pfe
   # qsub fails with "cannot send environment with the job" if -v names an unset
   # variable, so listing all candidates unconditionally breaks every submission.
+  # The ASP/ISIS env vars must be forwarded too: a qsub job starts with a fresh
+  # environment, so without these the worker falls back to its baked-in default
+  # ISISROOT (a conda env that may be absent), not the runtime passed here.
   vlist=""
-  for v in IMG_DIR IMG_EXT TR TR_COL PROJWIN PROCESSES THREADS TILE_SIZE NO_MOSAIC EXTRA_OPTS; do
+  for v in ASPROOT ISISROOT ISISDATA ALESPICEROOT \
+           IMG_DIR IMG_EXT TR TR_COL PROJWIN PROCESSES THREADS TILE_SIZE NO_MOSAIC EXTRA_OPTS; do
     eval "isset=\${$v+yes}"
     [ "$isset" = "yes" ] && vlist="${vlist:+$vlist,}$v"
   done
   vopt=""
   [ -n "$vlist" ] && vopt="-v $vlist"
-  $QSUB_BIN_RES -m n -r n -N map_${beg}_${end} -q normal \
+  $QSUB_BIN_RES -m n -r ${RERUNNABLE:-y} -N map_${beg}_${end} -q normal \
     -l walltime=$WALLTIME_RES                            \
     -W group_list=${groupName:?set groupName (PBS allocation) before submitting} -j oe -S /bin/bash               \
     -o $currDir/                                         \
