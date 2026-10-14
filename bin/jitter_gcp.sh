@@ -112,6 +112,9 @@ orientUnc=${ORIENTATION_UNC:-0}
 # is good but POORLY CONSTRAINED, not wrong. A ~15 by 15 km / ~1000-image polar site held
 # at 300000 tri x anchor-ratio 4 (about 1.2M anchors); the old 120000 / ratio-2 default
 # left knots starved. Raise MAX_NUM_TRI and the anchor ratio for larger sites or long tracks.
+# The Ceres problem size (memory) is the control-point TOTAL = MAX_NUM_TRI x (1 + gcp-ratio +
+# anchor-ratio); for a very large site keep that under the solver limit. MAX_PAIRWISE can stay
+# generous (5000) since these caps, not the match count, bound what enters the solve.
 maxNumTri=${MAX_NUM_TRI:-120000}
 maxGcpToTriRatio=${MAX_GCP_TO_TRI_RATIO:-2.0}
 maxAnchorToTriRatio=${MAX_ANCHOR_TO_TRI_RATIO:-1.0}
