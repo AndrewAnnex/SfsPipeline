@@ -43,6 +43,15 @@ qsub -m n -r n -N <name> -q normal \
 
 - Activate the environment first (`source init_asp.sh`), which puts `bin/` plus
   the ASP and ISIS tools on PATH and sets `ASPROOT`, `ISISROOT`, `ISISDATA`.
+- A `qsub` job starts with a fresh environment, so the submitting shell's
+  `ASPROOT`/`ISISROOT`/`ISISDATA`/`ALESPICEROOT` do not reach the worker unless
+  they are listed in the job's `-v`. A submitter that fans out per-chunk jobs
+  (`batch_mapproject.sh`, `launch_sfs_tiles.sh`) must forward these four, or the
+  worker falls back to its baked-in default `ISISROOT` (a conda env that may be
+  absent on the compute node) and fails. Both submitters now forward them.
+  Deeper proposed fix (not yet made): since a full ASP build bundles its own ISIS
+  runtime, the worker default could be `ISISROOT=${ISISROOT:-$ASPROOT}` instead of
+  a conda env, removing the conda dependency for the camera-only stages entirely.
 - Gate each stage on the PBS job reaching `job_state=F`, never on an output file
   appearing (a product shows up while still half-written). Inspect each product
   (hillshade, geodiff, red/green overlay) before moving on, not ten steps later.
@@ -283,6 +292,16 @@ sfs_flag_bad_cameras.py ba_htdem/run -o lists/removed_ids.txt
 sfs_prune_and_remosaic.sh map_htdem lists/removed_ids.txt $(pwd) 500 28
 ```
 
+After a per-line JITTER solve (esp. with a loose orientation guard or finer orientation
+knots), ALSO screen for blow-up cameras with cam_test: compare the pre-jitter camera against
+the jitter camera per image and flag any with max pixel diff > ~250 px (catastrophic
+> ~1000 px) that is in the SfS set, then drop it. Such wild poses still fit their own tie
+points, so reprojection and mapproj-offset stay flat and the bundle-stats prune above misses
+them, but they smear their own localized footprint in the max-lit. They are a handful, and
+redundant frames cover the gap, so pruning loses no coverage. Confirm by differencing the
+re-built (pruned) max-lit against the full one: the difference should be a tiny fraction of
+pixels confined to those footprints, with the scene-wide sharpness unchanged.
+
 Verify a couple of flagged cameras visually before pruning, and after rebuilding
 confirm the streaks are gone and the terrain did not move.
 
@@ -412,6 +431,15 @@ qsub -m n -r n -N hcorr -W group_list=$groupName -j oe -S /bin/bash \
   -- hillshade_correlator.sh sfs_dem.tif ref/lola_1mpp.tif $(pwd) hcorr_sfs_lola 25
 ```
 
+`hillshade_correlator.sh` hillshades its two inputs (grazing `hillshade -e 10`) before
+correlating, which is right for comparing two DEMs. When the inputs are already textured
+images rather than DEMs (two mapprojected orthoimages, or two max-lit mosaics, as in the
+old-vs-new check after re-registration), pass `SKIP_HILLSHADE=1` so it correlates them
+directly. Hillshading a reflectance image, whose values sit near zero and are read as an
+elevation over 1 m pixels, yields a flat textureless raster and the correlation then
+produces no tiles and no run-F. Note the correlator can exit 0 with no output in that
+failure mode, so always confirm run-F exists and run-D is megabytes, not bytes.
+
 If the shift is real (a roughly uniform few meters beyond LOLA's own slop), turn
 the disparity into a GCP with `dem2gcp.sh` and run the GCP-driven per-line refine
 `jitter_gcp.sh`. A rigid `bundle_adjust` under-corrects a spatially-structured
@@ -521,6 +549,19 @@ qsub -m n -r n -N sfs_blend -W group_list=$groupName -j oe -S /bin/bash \
   -- sfs_blend.sh ref/lola_1mpp.tif sfs_dem.tif max_lit.tif $(pwd)
 ```
 
+`sfs_blend.sh` now defaults to `SHADOW_FILL_MODE=lola-curved`, which keeps the
+SfS in the holes but caps it (and LOLA) by a floor grown from the surrounding
+SfS, so LOLA can no longer pop up above the terrain. This needs an ASP build with `sfs_blend
+--shadow-fill-mode` (committed 2026-10, landing in the nightly soon). On an older
+build the job fails with an unknown-option error. Set `SHADOW_FILL_MODE=lola` for
+the original behavior on any build.
+
+Inspect the blended DEM's hillshade. The fill in some shadowed areas may need
+to be touched up. Because the blend is local, a chosen area can be re-blended
+on a padded clip with different settings, then merged back into the full result
+with `dem_mosaic --priority-blending-length`. See the sfs-blend skill and
+`sfs_usage.rst`.
+
 ## 11. Height-uncertainty map (optional)
 
 Re-run the SfS worker with `estimError=1` to write a `-height-error.tif` per tile.
@@ -564,7 +605,9 @@ ships as one unit:
   cameras ONLY the SfS subset. Document the larger bundle-adjust set in the list but
   do not ship its images or cameras (no dead weight).
 - Cameras (when requested): `cameras/` with the final jitter (or bundle-adjust)
-  linear-reduced adjusted CSM `.json`, one per shipped image.
+  linear-reduced adjusted CSM `.json`, one per shipped image, named by bare image id.
+  Stacked solve passes leave a repeated `run-run-...-` prefix on each file; strip it
+  when copying in, so the camera ids match the ortho ids.
 - Ortho directories (subdirectories of the results dir): `map_images/` (every
   shipped SfS ortho at 1 m/pixel) and `map_images_native_res/` (the sub-1 m frames at
   their own native GSD, with `gsd.csv`). The native-res orthos are mapprojected with
@@ -581,7 +624,9 @@ against boundary artifacts and include the ROI polygon (`product_roi.gpkg`) so t
 recipient can crop. Record the choice. Registration degrades toward the domain edges.
 
 The 1 m/pixel ortho set is the SfS mapprojected images already produced (the
-`map.tr1.tif`), gathered and renamed. The native-GSD set is built with
+`map.tr1.tif`), gathered and renamed. MOVE them (they are big and the source map dir
+is wiped after delivery), leaving the dropped offenders and the pyramids behind. The
+native-GSD set is built with
 `mapproject_native_res.sh` over the sub-1 m frames of the SfS set (paired with their
 registered cameras), which mapprojects each at its own native resolution and writes
 `gsd.csv`:

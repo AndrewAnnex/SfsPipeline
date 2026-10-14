@@ -9,6 +9,11 @@
 # match_vrt_extent (from sfs_utilities.sh). By default (USE_VRT=0), inputs are
 # passed directly if they already share the reference grid.
 #
+# Inspect the blended result. If a shadowed area needs a touch-up, re-blend a
+# padded clip and merge it back with dem_mosaic --priority-blending-length (see
+# WORKFLOW.md and the sfs-blend skill). The sfs_blend --shadow-fill-mode option
+# can also grow a smooth floor from the surrounding SfS instead of using LOLA.
+#
 # Args:
 #   refDem    reference DEM (e.g. the LOLA regrid), defines the output grid
 #   sfsDem    the produced SfS DEM
@@ -19,13 +24,17 @@
 #   OUT_BLEND            output blended DEM (default <sfsDem stem>.blend.tif)
 #   OUT_WEIGHT           output blend weight (default <sfsDem stem>.weight.tif)
 #   SHADOW_THRESHOLD     image threshold for lit vs shadow (default 0.005)
-#   LIT_BLEND_LENGTH     blend length into lit area in pixels (default 25)
-#   SHADOW_BLEND_LENGTH  blend length into shadow in pixels (default 5)
+#   LIT_BLEND_LENGTH     blend length into lit area in pixels (default 20)
+#   SHADOW_BLEND_LENGTH  blend length into shadow in pixels (default 20)
 #   MIN_BLEND_SIZE       minimum shadow hole size to blend (default 25)
-#   WEIGHT_BLUR_SIGMA    Gaussian blur sigma for weight (default 5)
+#   WEIGHT_BLUR_SIGMA    Gaussian blur sigma for weight (default 10)
 #   CACHE_SIZE_MB        ASP cache size in MB (default 4096)
 #   THREADS              sfs_blend threads (default: all cores, nproc)
 #   USE_VRT              regrid via VRT to match reference (default 0)
+#   SHADOW_FILL_MODE     hole fill: lola, curved, sfs-curved, lola-curved
+#                        (default lola-curved; lola is the original behavior)
+#   SHADOW_FILL_MAX_DIAMETER  max hole diameter in pixels for the grown floor
+#                        (default 300)
 
 if [ "$#" -lt 4 ]; then
   echo "Usage: $0 refDem sfsDem maxLit currDir"
@@ -46,12 +55,20 @@ ulimit -c 0
 
 threads=${THREADS:-${NCPUS:-$(nproc --all)}}
 shadowThresh=${SHADOW_THRESHOLD:-0.005}
-litBlend=${LIT_BLEND_LENGTH:-25}
-shadowBlend=${SHADOW_BLEND_LENGTH:-5}
 minBlendSize=${MIN_BLEND_SIZE:-25}
-weightBlur=${WEIGHT_BLUR_SIGMA:-5}
 cacheSize=${CACHE_SIZE_MB:-4096}
 useVrt=${USE_VRT:-0}
+# Default to lola-curved: keep the SfS in the holes but cap it (and LOLA) by a
+# floor grown from the surrounding SfS, so LOLA can no longer pop up above the
+# terrain, with the matching feather (lit 20, shadow 20, sigma 10). This needs an
+# ASP build with sfs_blend --shadow-fill-mode. On an older build the job fails
+# with an unknown option. Set SHADOW_FILL_MODE=lola for the original LOLA fill on
+# any build.
+shadowFillMode=${SHADOW_FILL_MODE:-lola-curved}
+shadowFillMaxDiam=${SHADOW_FILL_MAX_DIAMETER:-300}
+litBlend=${LIT_BLEND_LENGTH:-20}
+shadowBlend=${SHADOW_BLEND_LENGTH:-20}
+weightBlur=${WEIGHT_BLUR_SIGMA:-10}
 
 stem=${sfsDem%.tif}
 outBlend=${OUT_BLEND:-${stem}.blend.tif}
@@ -70,17 +87,19 @@ else
   inMax="$maxLit"
 fi
 
-sfs_blend                               \
-  --threads $threads                    \
-  --lola-dem "$refDem"                  \
-  --sfs-dem "$inSfs"                    \
-  --max-lit-image-mosaic "$inMax"       \
-  --image-threshold "$shadowThresh"     \
-  --lit-blend-length $litBlend          \
-  --shadow-blend-length $shadowBlend    \
-  --min-blend-size $minBlendSize        \
-  --weight-blur-sigma $weightBlur       \
-  --cache-size-mb $cacheSize            \
-  --output-dem "$outBlend"              \
-  --output-weight "$outWeight"          \
+sfs_blend                                       \
+  --threads $threads                            \
+  --lola-dem "$refDem"                          \
+  --sfs-dem "$inSfs"                            \
+  --max-lit-image-mosaic "$inMax"               \
+  --image-threshold "$shadowThresh"             \
+  --lit-blend-length $litBlend                  \
+  --shadow-blend-length $shadowBlend            \
+  --min-blend-size $minBlendSize                \
+  --weight-blur-sigma $weightBlur               \
+  --shadow-fill-mode $shadowFillMode            \
+  --shadow-fill-max-diameter $shadowFillMaxDiam \
+  --cache-size-mb $cacheSize                    \
+  --output-dem "$outBlend"                      \
+  --output-weight "$outWeight"                  \
   >> "$out" 2>&1
