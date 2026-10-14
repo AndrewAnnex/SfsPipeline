@@ -57,20 +57,31 @@ echo " " >> $out
 # Hillshade the DEMs with a small elevation to bring out contrast
 # Consider using instead:
 # gdaldem hillshade -multidirectional -compute_edges -alt 20.
-leftHill=${leftDem%.tif}_hill.tif
-rightHill=${rightDem%.tif}_hill.tif
-# Skip if done already
-if [ ! -f "$leftHill" ]; then
-    echo Creating left hillshade: $leftHill
-    hillshade -e 10 $leftDem -o $leftHill >> $out 2>&1
+# SKIP_HILLSHADE=1 correlates the two inputs DIRECTLY, without hillshading. Use this
+# when the inputs are already textured images (e.g. mapprojected orthoimages or max-lit
+# mosaics), not DEMs: hillshading a reflectance image (values ~0..1 treated as elevation
+# over 1 m pixels) yields a flat, textureless raster and the correlation then produces no
+# tiles. For true DEM-to-DEM comparison leave this unset so the relief is brought out.
+if [ -n "$SKIP_HILLSHADE" ]; then
+    leftHill=$leftDem
+    rightHill=$rightDem
+    echo "SKIP_HILLSHADE set: correlating inputs directly, no hillshade" >> $out 2>&1
 else
-    echo Left hillshade $leftHill exists already, skipping >> $out 2>&1
-fi
-if [ ! -f "$rightHill" ]; then
-    echo Creating right hillshade: $rightHill
-    hillshade -e 10 $rightDem -o $rightHill >> $out 2>&1
-else
-    echo Right hillshade $rightHill exists already, skipping >> $out 2>&1
+    leftHill=${leftDem%.tif}_hill.tif
+    rightHill=${rightDem%.tif}_hill.tif
+    # Skip if done already
+    if [ ! -f "$leftHill" ]; then
+        echo Creating left hillshade: $leftHill
+        hillshade -e 10 $leftDem -o $leftHill >> $out 2>&1
+    else
+        echo Left hillshade $leftHill exists already, skipping >> $out 2>&1
+    fi
+    if [ ! -f "$rightHill" ]; then
+        echo Creating right hillshade: $rightHill
+        hillshade -e 10 $rightDem -o $rightHill >> $out 2>&1
+    else
+        echo Right hillshade $rightHill exists already, skipping >> $out 2>&1
+    fi
 fi
 
 # Build image pyramids for the hillshades
