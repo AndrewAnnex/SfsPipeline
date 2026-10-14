@@ -55,6 +55,9 @@
 #   NUM_ITER           (75)     --num-iterations
 #   NUM_PASSES         (2)      --num-passes
 #   ROBUST_THRESHOLD   (2)      --robust-threshold (reprojection; NOT GCP)
+#   GCP_ROBUST_THRESHOLD (-1=off) --gcp-robust-threshold (GCP position residual, sigma
+#                               units; set ~20 for a 5-10 m shift to down-weight only outliers)
+#   ORIENTATION_UNC    (0=off)  --orientation-uncertainty (per-pose guard; usually leave off)
 #   Balance caps (ASP build 2026/10+, always passed):
 #   MAX_NUM_TRI          (120000)  --max-num-tri-points (the master knob)
 #   MAX_GCP_TO_TRI_RATIO (2.0)     --max-gcp-to-tri-points-ratio
@@ -92,11 +95,23 @@ maxGcpErr=${MAX_GCP_REPROJ_ERR:-50}
 numIter=${NUM_ITER:-75}
 numPasses=${NUM_PASSES:-2}
 robustThresh=${ROBUST_THRESHOLD:-2}
+# Robust (Cauchy) loss on the GCP position residual, in gcp-sigma units (meters when
+# the gcp sigma is 1). -1 = off (pure L2, default). Set it ABOVE the legitimate shift
+# (about 20 for a 5-10 m SfS->LOLA shift) so real control keeps full pull and only true
+# outliers soften.
+gcpRobustThresh=${GCP_ROBUST_THRESHOLD:--1}
+# Per-pose metric orientation guard (1 sigma, meters). 0 = off. Pins every orientation
+# knot (incl yaw) regardless of anchor coverage. Usually leave OFF: dense anchors (below)
+# constrain the knots, and the guard is an avoidable detour that can add a washboard.
+orientUnc=${ORIENTATION_UNC:-0}
 
-# Balance caps (ASP build 2026/10+, always passed). MAX_NUM_TRI is the master
-# knob; the GCP and anchor caps are set relative to it via the ratios. Increase
-# MAX_NUM_TRI for sites larger than about 15 by 15 km, or long tracks with many
-# frames.
+# Balance caps (ASP build 2026/10+, always passed). MAX_NUM_TRI is the master knob; the
+# GCP and anchor caps are set relative to it via the ratios. SCALE BOTH tri and anchor
+# counts with the site: too few and specific orientation knots fall in the solver null
+# space and blow up (large yaw swings throwing the ground point tens of km) - the solution
+# is good but POORLY CONSTRAINED, not wrong. A ~15 by 15 km / ~1000-image polar site held
+# at 300000 tri x anchor-ratio 4 (about 1.2M anchors); the old 120000 / ratio-2 default
+# left knots starved. Raise MAX_NUM_TRI and the anchor ratio for larger sites or long tracks.
 maxNumTri=${MAX_NUM_TRI:-120000}
 maxGcpToTriRatio=${MAX_GCP_TO_TRI_RATIO:-2.0}
 maxAnchorToTriRatio=${MAX_ANCHOR_TO_TRI_RATIO:-1.0}
@@ -157,6 +172,8 @@ echo "numThreads=$numThreads"  >> $out
     --max-gcp-to-tri-points-ratio $maxGcpToTriRatio              \
     --max-anchor-points-to-tri-points-ratio $maxAnchorToTriRatio \
     --robust-threshold $robustThresh                             \
+    --gcp-robust-threshold $gcpRobustThresh                      \
+    --orientation-uncertainty $orientUnc                         \
     --min-triangulation-angle 1e-10                              \
     --forced-triangulation-distance 100000                       \
     --max-initial-reprojection-error 50                          \
