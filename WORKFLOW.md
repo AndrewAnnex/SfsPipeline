@@ -397,24 +397,14 @@ launch_sfs_tiles.sh tiles lists/secondary_images.txt ba_htdem/run \
 
 ### 8d. Merge the tiles
 
-Merge with a blended `dem_mosaic` (no `--max`, so tile seams stay smooth):
+Merge with a blended `dem_mosaic` (no `--max`, so tile seams stay smooth). The
+output product name is `sfs_dem.tif`.
 
 ```bash
 qsub -m n -r n -N sfs_merge -W group_list=$groupName -j oe -S /bin/bash \
   -l select=1:ncpus=28:model=bro_ele -l walltime=4:00:00 \
   -- dem_mosaic_list.sh lists/sfs_tiles.txt sfs_dem.tif $(pwd)
 ```
-
-`dem_mosaic` treats the `-o` value as a prefix and always appends a tile suffix,
-so the product lands at `sfs_dem-tile-0.tif`, not `sfs_dem.tif`. Rename it to the
-intended name.
-
-```bash
-mv sfs_dem-tile-0.tif sfs_dem.tif
-```
-
-This applies to every `dem_mosaic_list.sh` call, including the max-lit mosaics
-later.
 
 Inspect: `geodiff` the SfS DEM against the reference and hillshade both. Expect
 mean dz near zero, sub-meter std, and no tile seams.
@@ -655,16 +645,21 @@ ships as one unit:
   do not ship its images or cameras (no dead weight).
 - Cameras (when requested): `cameras/` with the final jitter (or bundle-adjust)
   linear-reduced adjusted CSM `.json`, one per shipped image, named by bare image id.
-  Stacked solve passes leave a repeated `run-run-...-` prefix on each file. Strip it
-  when copying in, so the camera ids match the ortho ids.
+  Stacked solve passes leave a repeated `run-run-...-` prefix on each file. On the
+  way in, rename `run-run-<id>-...-adjusted_state.json` to `<id>.json`, so the camera
+  ids match the ortho ids.
 - Ortho directories (subdirectories of the results dir): `map_images/` (every
   shipped SfS ortho at 1 m/pixel) and `map_images_native_res/` (the sub-1 m frames at
   their own native GSD, with `gsd.csv`). The native-res orthos are mapprojected with
   the same registered cameras. Record the real output pixel size in `gsd.csv`, read
   back from each ortho.
 - Disparity to LOLA: `sfs_to_lola_corr/` with the after-registration SfS-to-LOLA
-  horizontal disparity as colorized GeoTIFFs (`colormap` on a fixed symmetric scale),
-  one band east-west and one north-south.
+  horizontal disparity, from `hillshade_correlator.sh`. Ship both the numeric float
+  bands and the colorized views. The numeric bands are the customer's actual product,
+  the colorized ones are the quick look. On the way in, rename:
+  - `run-F_b1_nodata.tif` to `F-H.tif` (dh, horizontal, east-west).
+  - `run-F_b2_nodata.tif` to `F-V.tif` (dv, vertical, north-south).
+  - the colorized `colormap -5..5` views to `dh_ew_color.tif` and `dv_ns_color.tif`.
 
 Region of interest and cropping: SfS is run on a domain padded beyond the product
 ROI. Either crop every product to the ROI (snap the ROI box to the domain pixel
@@ -701,3 +696,4 @@ rasters, orthos, and cameras are data and are not version-controlled.
 - both ortho mosaics
 - the two image-id lists (`ba_image_ids_path`, `sfs_image_ids_path`)
 - the two orthoimage directories (1 m/pixel and native-GSD, the latter with a per-image GSD CSV)
+- the SfS-to-LOLA numeric disparity bands (`sfs_to_lola_corr_dh_path`, `sfs_to_lola_corr_dv_path`)
