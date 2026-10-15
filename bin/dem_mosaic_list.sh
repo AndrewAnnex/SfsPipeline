@@ -54,6 +54,6 @@ echo "log: $(pwd)/$out"
 
 dem_mosaic --threads $threads \
     --dem-list $demList       \
-    -o $prefix                \
+    -o ${prefix}.tif          \
     "$@"                      \
     >> $out 2>&1
