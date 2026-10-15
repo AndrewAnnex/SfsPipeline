@@ -80,11 +80,10 @@ orthophoto_dir_natural: path/to/LROC-NAC-maps-natural
 orthophoto_natural_gsd_csv: path/to/LROC-NAC-maps-natural/gsd.csv
 
 # SfS-to-LOLA horizontal disparity, after re-registration, from
-# hillshade_correlator.sh. The numeric float bands are the customer's product
-# (Ross asked for them), shipped alongside the colorized -5..5 quick looks in
-# sfs_to_lola_corr/. Naming map: F-H.tif = run-F_b1_nodata.tif = dh east-west,
-# F-V.tif = run-F_b2_nodata.tif = dv north-south. Do not wipe the hcorr_* run dir
-# until the delivery is accepted, the run-F bands are a shipped product.
+# hillshade_correlator.sh. The numeric float bands are a delivered product,
+# shipped alongside the colorized -5..5 quick looks in sfs_to_lola_corr/. Naming
+# map: F-H.tif = run-F_b1_nodata.tif = dh east-west, F-V.tif = run-F_b2_nodata.tif
+# = dv north-south.
 sfs_to_lola_corr_dh_path: path/to/sfs_to_lola_corr/F-H.tif
 sfs_to_lola_corr_dv_path: path/to/sfs_to_lola_corr/F-V.tif
 
