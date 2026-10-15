@@ -52,7 +52,7 @@ def fix_distortion_coeff(json_path):
     print(f"Patched scalar coefficient {coeff} -> [{coeff}] in {os.path.basename(json_path)}")
 
 def find_fetch_tool():
-  # Prefer sibling fetch_lro_nac.sh in 
+  # Prefer the sibling fetch_lro_nac.sh in this script's dir.
   cand1 = os.path.join(SCRIPT_DIR, "fetch_lro_nac.sh")
   if os.path.exists(cand1) and os.access(cand1, os.X_OK):
     return cand1
