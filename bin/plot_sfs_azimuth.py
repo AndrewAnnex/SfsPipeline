@@ -37,7 +37,8 @@ def load_azimuth_table(filepath):
           continue
   return np.array(azimuths), np.array(elevations), pids
 
-def make_polar_plot(az1, az2, label1, label2, title, out_png):
+def make_polar_plot(az1, az2, label1, label2, title, out_png,
+                    show_forbidden=True, show_legend=True, font_scale=1.0):
   """
   Create polar rose scatter plot:
   Inner tier (r=1.0): Dataset 1 (blue balls)
@@ -71,12 +72,14 @@ def make_polar_plot(az1, az2, label1, label2, title, out_png):
       label=f'{label2} (n={len(az2)})', zorder=4
     )
 
-  # Highlight astronomically forbidden illumination zone (300 to 60 deg) for lunar south pole
-  theta_shade1 = np.linspace(np.radians(300), np.radians(360), 50)
-  theta_shade2 = np.linspace(0, np.radians(60), 50)
   r_max = 1.55 if len(az2) > 0 else 1.25
-  ax.fill_between(theta_shade1, 0, r_max, color='#eceff1', alpha=0.4)
-  ax.fill_between(theta_shade2, 0, r_max, color='#eceff1', alpha=0.4)
+
+  # Highlight astronomically forbidden illumination zone (300 to 60 deg) for lunar south pole
+  if show_forbidden:
+    theta_shade1 = np.linspace(np.radians(300), np.radians(360), 50)
+    theta_shade2 = np.linspace(0, np.radians(60), 50)
+    ax.fill_between(theta_shade1, 0, r_max, color='#eceff1', alpha=0.4)
+    ax.fill_between(theta_shade2, 0, r_max, color='#eceff1', alpha=0.4)
 
   # Angular labels every 30 deg
   ticks = np.arange(0, 360, 30)
@@ -85,16 +88,18 @@ def make_polar_plot(az1, az2, label1, label2, title, out_png):
   tick_labels[3] = '90° (E)'
   tick_labels[6] = '180° (S)'
   tick_labels[9] = '270° (W)'
-  ax.set_thetagrids(ticks, labels=tick_labels, fontsize=10, weight='bold')
+  ax.set_thetagrids(ticks, labels=tick_labels, fontsize=10 * font_scale, weight='bold')
 
   ax.set_rmax(r_max)
   ax.set_yticklabels([])
   ax.set_rticks([])
   ax.grid(True, linestyle=':', color='#90a4ae', alpha=0.6)
 
-  ax.set_title(title, fontsize=13, weight='bold', pad=25)
-  ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.15), frameon=True,
-            facecolor='white', edgecolor='#cfd8dc', fontsize=10, ncol=2)
+  if title:
+    ax.set_title(title, fontsize=13 * font_scale, weight='bold', pad=25)
+  if show_legend:
+    ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.15), frameon=True,
+              facecolor='white', edgecolor='#cfd8dc', fontsize=10 * font_scale, ncol=2)
 
   plt.tight_layout()
   plt.savefig(out_png, dpi=300, bbox_inches='tight')
@@ -110,6 +115,11 @@ def main():
   parser.add_argument("--title", default="Solar Azimuth Distribution: LRO NAC Multi-Illumination Coverage",
                       help="Plot title")
   parser.add_argument("-o", "--output-png", default="solar_azimuth_polar.png", help="Output PNG path")
+  parser.add_argument("--no-forbidden-zone", action="store_true",
+                      help="Do not shade the astronomically forbidden azimuth sector")
+  parser.add_argument("--no-legend", action="store_true", help="Do not draw the legend")
+  parser.add_argument("--font-scale", type=float, default=1.0,
+                      help="Multiply all font sizes by this factor")
   args = parser.parse_args()
 
   az1, el1, pids1 = load_azimuth_table(args.table1)
@@ -118,7 +128,10 @@ def main():
   if len(az1) == 0 and len(az2) == 0:
     sys.exit(f"Error: No valid azimuth entries found in {args.table1}")
 
-  make_polar_plot(az1, az2, args.label1, args.label2, args.title, args.output_png)
+  make_polar_plot(az1, az2, args.label1, args.label2, args.title, args.output_png,
+                  show_forbidden=not args.no_forbidden_zone,
+                  show_legend=not args.no_legend,
+                  font_scale=args.font_scale)
 
 if __name__ == "__main__":
   main()
