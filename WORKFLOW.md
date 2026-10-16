@@ -593,7 +593,7 @@ on a padded clip with different settings, then merged back into the full result
 with `dem_mosaic --priority-blending-length`. See the sfs-blend skill and
 `sfs_usage.rst`.
 
-## 11. Height-uncertainty map (optional)
+## 11. Height-uncertainty map
 
 Re-run the SfS worker with `estimError=1` to write a `-height-error.tif` per tile.
 This pass evaluates height perturbations on the final produced SfS DEM (the blend),
@@ -637,7 +637,7 @@ ships as one unit:
 
 - Terrains: `sfs_dem.tif` (raw SfS), `sfs_dem_blend.tif` (blended with LOLA) and its
   hillshade `sfs_dem_blend_hill.tif`, `sfs_dem_weight.tif`, `lola_1mpp.tif`, and the
-  `sfs_dem_blend_lola-diff.tif` geodiff. An optional `height_uncertainty.tif`.
+  `sfs_dem_blend_lola-diff.tif` geodiff, and `height_uncertainty.tif`.
 - Ortho mosaics: `max_lit_mosaic.tif` and `average_mosaic.tif`, on the same grid.
 - Image-id lists: `bundle_adjust_image_ids.txt` (the full bundle-adjust input) and
   `sfs_image_ids.txt` (the SfS subset). Ship both as text. Deliver as images and
