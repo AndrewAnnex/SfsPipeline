@@ -7,7 +7,7 @@
 # parallel_stereo in --correlator-mode, then emit the dx/dy disparity. Use this whenever
 # you just want the horizontal dh/dv pattern between two DEMs (e.g. a SfS->LOLA shift, a
 # sensitivity check); use hillshade_correlator.sh with DO_PC_ALIGN=1 when you also need the
-# alignment transform. See the dem-comparison skill.
+# alignment transform.
 #
 # Correlate HILLSHADES with asp_mgm, NOT asp_bm: hillshades are smooth/low-texture, so
 # block matching (asp_bm) finds almost nothing (~0-12% valid), while SGM/MGM fills via

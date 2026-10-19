@@ -36,8 +36,6 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 tool=""
 if [ -x "$script_dir/prepare_lro_nac.py" ]; then
   tool="$script_dir/prepare_lro_nac.py"
-elif [ -x "$HOME/bin/prepare_usgs_nac.py" ]; then
-  tool="$HOME/bin/prepare_usgs_nac.py"
 elif command -v prepare_lro_nac.py >/dev/null 2>&1; then
   tool="$(command -v prepare_lro_nac.py)"
 else

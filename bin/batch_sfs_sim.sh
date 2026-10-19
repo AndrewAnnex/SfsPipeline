@@ -22,7 +22,7 @@ binDir="$(cd "$(dirname "$0")" && pwd)"
 #               skipped. Empty "" or omitted = no reuse (mapproject is
 #               redone per image).
 #   procs       optional: xargs concurrency on the allocated node
-#               (default 8). Mons precedent says 8 is safe on bro_ele.
+#               (default 8, safe on bro_ele).
 #
 # Env vars (pass-through to sfs_sim_align.sh):
 #   ALIGN_THRESH      e.g. 1e9 for verify-only mode - exit after
@@ -38,18 +38,11 @@ binDir="$(cd "$(dirname "$0")" && pwd)"
 #                     sfs's own default is -1 (off), which makes the
 #                     per-image exposure init skip mostly-shadow images.
 #
-# INTERFACE CHANGED 2026-04-20 (breaking):
-#   - imageList moved from position 3 -> position 1
-#   - optional mapList (pos 9) and procs (pos 10) added at the end
-#   - inner loop is now xargs-parallel (was serial for-loop); this turns
-#     a fully-utilized bro_ele allocation from 1-cpu into ~28-cpu and
-#     reduces SBU cost per image by ~8x
-#   - each image now gets its own subdir under simDir
-#     (simDir/<id>/...) instead of a flat layout with id-prefixed
-#     filenames. Concurrent xargs workers are fully isolated - no
-#     path can collide. Downstream aggregation (collecting cams,
-#     gcps, stats, residuals into flat dirs) is left to the caller
-#     as an offline post-processing step.
+# The inner loop is xargs-parallel: a fully-utilized bro_ele allocation runs
+# about 28 images at once. Each image gets its own subdir under simDir
+# (simDir/<id>/...), so concurrent xargs workers are fully isolated and no path
+# can collide. Downstream aggregation (collecting cams, gcps, stats, residuals
+# into flat dirs) is left to the caller as an offline post-processing step.
 # See the README post-SfS registration section for a worked invocation.
 
 if [ "$#" -lt 8 ]; then
@@ -117,11 +110,11 @@ mkdir -p "$simDir"
 # Build a tmp job file: one line per image, TAB-separated "id\texistingMap".
 # When mapList is empty the second column is empty for every row.
 jobs=$(mktemp)
-imgChunk=$(cat "$imageList" | ~/bin/print_line_range.pl $beg $end)
+imgChunk=$(sed -n "$((beg + 1)),${end}p" "$imageList")
 if [ -z "$mapList" ]; then
     echo "$imgChunk" | perl -ne 'if (/(M\d+[LR]E)/) { print "$1\t\n"; }' > "$jobs"
 else
-    mapChunk=$(cat "$mapList" | ~/bin/print_line_range.pl $beg $end)
+    mapChunk=$(sed -n "$((beg + 1)),${end}p" "$mapList")
     paste <(echo "$imgChunk") <(echo "$mapChunk") | \
         perl -ne 'if (/(M\d+[LR]E).*?\t(.*)/) { print "$1\t$2\n"; }' > "$jobs"
 fi

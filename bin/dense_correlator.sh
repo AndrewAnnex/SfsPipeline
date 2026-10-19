@@ -56,8 +56,8 @@ win="-${range} -${range} ${range} ${range}"
 # search range at every tile. Slower but robust: for sites with small
 # shift (~1 px or less at the 33x-subsampled low-res stage), the seeded
 # correlator can miss the shift entirely because it becomes sub-pixel
-# at that scale. Mons Mouton's 20-30 px full-res shift was too small
-# to seed. Slower-but-correct wins over fast-but-fragile by default.
+# at that scale. A 20-30 px full-res shift can be too small to seed.
+# Slower-but-correct wins over fast-but-fragile by default.
 parallel_stereo              \
   --correlator-mode          \
   --stereo-algorithm asp_mgm \

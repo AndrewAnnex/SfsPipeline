@@ -12,9 +12,9 @@
 # so a junk max-lit can never be silently produced.
 #
 # This script is the compute-node worker. Submit it, do NOT run it on the head node:
-#   /PBS/bin/qsub -q normal -m n -r y -N mosaic -l walltime=1:00:00 -W group_list=e2305 \
+#   /PBS/bin/qsub -q normal -m n -r y -N mosaic -l walltime=1:00:00 -W group_list=<alloc> \
 #     -j oe -S /bin/bash -l select=1:ncpus=28:model=bro_ele -- \
-#     /home6/oalexan1/projects/SfsPipeline/bin/batch_mosaic.sh <run> <workDir>
+#     /path/to/SfsPipeline/bin/batch_mosaic.sh <run> <workDir>
 #
 # Usage (on the compute node): batch_mosaic.sh <run> <workDir>
 
@@ -23,7 +23,7 @@ run=$1
 wd=$2
 cd "$wd"
 
-export ASPROOT=${ASPROOT:-/home6/oalexan1/projects/BinaryBuilder/StereoPipeline}
+export ASPROOT=${ASPROOT:-$HOME/projects/BinaryBuilder/StereoPipeline}
 export PATH=$ASPROOT/bin:$PATH
 nt=${NCPUS:-28}
 wildP95=${WILD_P95:-50}

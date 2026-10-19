@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-# Break a GeoTIFF into padded tiles for per-tile parallel_sfs. A reusable python port
-# of the old ~/bin/tile.pl (which was perl). Tiles are made NEAR-EQUAL in size (the
+# Break a GeoTIFF into padded tiles for per-tile parallel_sfs. Tiles are made near-equal in size (the
 # requested tile size is rounded so the image divides evenly), then each tile window is
-# PADDED by <pad> pixels on all sides, clamped to the image bounds, so neighbor tiles
+# padded by <pad> pixels on all sides, clamped to the image bounds, so neighbor tiles
 # overlap and the SfS blend has no seam gaps. Tiles are cut with gdal_translate -srcwin
 # and named tile-<N>.tif with N starting at 10001 - the numeric id that
-# launch_sfs_tiles.sh keys on. gdal_translate must be on PATH (StereoPipeline build or a
-# gdal conda env; on pfe use the `geo` env - see the pfe-nas skill).
+# launch_sfs_tiles.sh keys on. gdal_translate must be on PATH (a StereoPipeline build or a
+# gdal conda env).
 #
 # Usage: tile_dem.py <input.tif> <tileSizeX> <tileSizeY> <outDir> <pad>
 #   e.g. tile_dem.py ref/lola_1mpp_extra_noblur.tif 4000 4000 tiles 200
@@ -30,13 +29,13 @@ def main():
   sizeX, sizeY = ds.RasterXSize, ds.RasterYSize
   tx, ty, pad = a.tileX, a.tileY, a.pad
 
-  # round the tile count so tiles come out near-equal (mirror tile.pl)
+  # round the tile count so tiles come out near-equal
   nX = int(sizeX / tx + 0.5) or 1
   nY = int(sizeY / ty + 0.5) or 1
   tx = sizeX // nX; nX = (sizeX // tx) or 1
   ty = sizeY // nY; nY = (sizeY // ty) or 1
 
-  # output prefix, mirroring tile.pl: a slash in outDir splits dir/base -> "dir/base-tile-"
+  # output prefix: a slash in outDir splits dir/base -> "dir/base-tile-"
   if "/" in a.outDir:
     first, rest = a.outDir.split("/", 1)
     outDir, pref = first, f"{first}/{rest}-tile-"

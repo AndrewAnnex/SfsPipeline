@@ -1,6 +1,5 @@
 #!/bin/bash
 # Generic max-lit mosaic: dem_mosaic --max on a caller-prepared list.
-# Supersedes max_lit_full.sh and max_lit_clean.sh (2026-04-15).
 #
 # Usage: max_lit.sh <list> <output> [<threads>]
 #

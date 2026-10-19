@@ -11,7 +11,7 @@
 #
 # Inspect the blended result. If a shadowed area needs a touch-up, re-blend a
 # padded clip and merge it back with dem_mosaic --priority-blending-length (see
-# WORKFLOW.md and the sfs-blend skill). The sfs_blend --shadow-fill-mode option
+# WORKFLOW.md). The sfs_blend --shadow-fill-mode option
 # can also fill holes with a surface grown from the surrounding SfS that curves
 # gently downward, instead of using LOLA.
 #
@@ -33,7 +33,7 @@
 #   THREADS              sfs_blend threads (default: all cores, nproc)
 #   USE_VRT              regrid via VRT to match reference (default 0)
 #   SHADOW_FILL_MODE     hole fill: lola, curved, lola-curved
-#                        (default lola-curved; lola is the original behavior)
+#                        (default lola-curved; lola is a plain LOLA fill)
 #   SHADOW_FILL_MAX_DIAMETER  max hole diameter in pixels for the curved surface
 #                        (default 300)
 
@@ -60,12 +60,10 @@ minBlendSize=${MIN_BLEND_SIZE:-25}
 cacheSize=${CACHE_SIZE_MB:-4096}
 useVrt=${USE_VRT:-0}
 # Default to lola-curved: the per-pixel minimum of the SfS, LOLA, and a surface
-# grown from the surrounding SfS that curves gently downward, so LOLA can no
-# longer pop up above the terrain, with the matching feather (lit 20, shadow 20,
-# sigma 10). This needs an
-# ASP build with sfs_blend --shadow-fill-mode. On an older build the job fails
-# with an unknown option. Set SHADOW_FILL_MODE=lola for the original LOLA fill on
-# any build.
+# grown from the surrounding SfS that curves gently downward, so LOLA does not
+# pop up above the terrain, with the matching feather (lit 20, shadow 20,
+# sigma 10). This needs an ASP build that supports sfs_blend --shadow-fill-mode.
+# Set SHADOW_FILL_MODE=lola for a plain LOLA fill.
 shadowFillMode=${SHADOW_FILL_MODE:-lola-curved}
 shadowFillMaxDiam=${SHADOW_FILL_MAX_DIAMETER:-300}
 litBlend=${LIT_BLEND_LENGTH:-20}

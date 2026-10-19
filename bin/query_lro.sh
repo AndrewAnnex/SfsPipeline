@@ -2,7 +2,7 @@
 # Query the PDS Geosciences Node ODE REST API for LRO NAC images by lat/lon
 # bounding box or DEM extent.
 #
-# Emits product ID lists (for prepare_usgs_nac.py or fetch_lro_nac.sh) and direct
+# Emits product ID lists (for prepare_lro_nac.py or fetch_lro_nac.sh) and direct
 # .IMG download URLs (for download_all.sh).
 #
 # Usage:

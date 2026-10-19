@@ -34,7 +34,7 @@ while true; do
     
     # Looks like the xml file is not needed later
     allDone=1
-    for f in $(cat $list | ~/bin/print_line_range.pl $b $e | grep -i -v xml); do
+    for f in $(sed -n "$((b + 1)),${e}p" "$list" | grep -i -v xml); do
     
       # This can have non-printable characters such as \r, which need to be removed
       f=$(echo $f | perl -pi -e 's/\s+//g')
@@ -49,7 +49,7 @@ while true; do
         
       allDone=0
       echo Trying to download $f
-      /usr/bin/time wget --show-progress -N --no-check-certificate $f
+      wget -N $f
       ans=$?
       if [ "$ans" -ne 0 ]; then
             echo Download failed, waiting 30 seconds and trying again.

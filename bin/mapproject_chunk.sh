@@ -15,7 +15,7 @@
 #   TR_COL    - column index of the image list holding a per-image GSD. When
 #               set, each frame is mapprojected at --tr <that GSD> (native-
 #               resolution mode) and the output is named <id>.map.tif. When
-#               both TR and TR_COL are unset, the legacy single grid --tr 1
+#               both TR and TR_COL are unset, the default single grid --tr 1
 #               is used (output named <id>.cal.echo.map.tr1.tif).
 #   PROJWIN   - optional target projection window (e.g. "xmin ymin xmax ymax").
 #               When unset, maps the full image onto the DEM.
@@ -79,7 +79,7 @@ exec >> "$out" 2>&1
 maps=""
 
 idx=0
-for raw_entry in $(cat "$imageList" | ~/bin/print_line_range.pl "$beg" "$end" | ~/bin/print_col.pl 1); do
+for raw_entry in $(sed -n "$((beg + 1)),${end}p" "$imageList" | awk '{print $1}'); do
 
   # Extract base identifier. Support LRO NAC pattern M<digits><L|R>E as well as general basenames (OHRC, CTX, etc.)
   if [[ "$raw_entry" =~ (M[0-9]+[LR]E) ]]; then
@@ -101,12 +101,12 @@ for raw_entry in $(cat "$imageList" | ~/bin/print_line_range.pl "$beg" "$end" | 
   # Map name and per-image resolution:
   # 1. TR env var (e.g. TR=0.5 or TR=1.0)
   # 2. TR_COL env var (read per-image GSD from column)
-  # 3. Default: legacy --tr 1
+  # 3. Default: --tr 1
   if [ -n "$TR" ]; then
     tr_opt="--tr $TR"
     map="${mapDir}/${f}.map.tif"
   elif [ -n "$TR_COL" ]; then
-    gsd=$(sed -n "$((beg + idx + 1))p" "$imageList" | ~/bin/print_col.pl "$TR_COL")
+    gsd=$(sed -n "$((beg + idx + 1))p" "$imageList" | awk -v c="$TR_COL" '{print $c}')
     tr_opt="--tr $gsd"
     map="${mapDir}/${f}.map.tif"
   else

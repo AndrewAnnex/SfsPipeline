@@ -2,7 +2,7 @@
 # Query the PDS Geosciences Node ODE REST API for Lunar Reconnaissance Orbiter (LRO)
 # Narrow Angle Camera (NAC) images over a geographic bounding box or DEM extent.
 #
-# Emits clean product ID lists (for prepare_usgs_nac.py, fetch_lro_nac.sh, or paired
+# Emits clean product ID lists (for prepare_lro_nac.py, fetch_lro_nac.sh, or paired
 # camera lists) and direct .IMG download URLs (for download_all.sh).
 #
 # Integration in the SfS Workflow:
@@ -14,7 +14,7 @@
 #          --output-products lists/products.txt
 #   2. Download raw EDR images (.IMG) in bulk:
 #        download_all.sh lists/urls.txt
-#   3. Process / calibrate via prepare_usgs_nac.py or process_all.sh.
+#   3. Process / calibrate via prepare_lro_nac.py (or batch_prepare_lro.sh).
 #
 # Arguments and Options:
 #   --lat-lon MINLAT MAXLAT WESTLON EASTLON
@@ -322,7 +322,7 @@ def main():
   parser.add_argument("--output-urls", type=str, default=None,
                       help="Output file for direct .IMG download URLs (feeds into download_all.sh).")
   parser.add_argument("--output-products", type=str, default=None,
-                      help="Output file for product IDs (feeds into prepare_usgs_nac.py / lists).")
+                      help="Output file for product IDs (feeds into prepare_lro_nac.py / lists).")
   parser.add_argument("--output-table", type=str, default=None,
                       help="Output file for detailed metadata table.")
 

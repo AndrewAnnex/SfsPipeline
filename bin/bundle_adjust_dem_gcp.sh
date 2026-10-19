@@ -4,10 +4,10 @@
 # a GCP file, an existing prefix of clean match files (no rematching), and
 # pairwise images/cameras supplied via lists.
 #
-# Use case in this repo: shift Andrew s ba2s_ref cameras into LOLA frame
-# using GCPs that have been transformed from SfS frame to LOLA frame by
-# trans_gcp.sh, while reusing the match files from Andrew s
-# BA. --heights-from-dem and --mapproj-dem are both the LOLA DEM.
+# Use case: shift an existing camera set into the LOLA frame using GCPs that
+# have been transformed from the SfS frame to the LOLA frame by trans_gcp.sh,
+# while reusing the match files from the prior bundle adjustment.
+# --heights-from-dem and --mapproj-dem are both the LOLA DEM.
 # The --mapproj-dem option enables per-image ground-offset residuals
 # in bundle_adjust output (run-mapproj_match_offset_*).
 #
@@ -32,13 +32,12 @@
 #   DEM_UNCERTAINTY        --heights-from-dem-uncertainty meters
 #                          (default 25.0; loose enough to let GCPs pull
 #                          the cameras ~10 m or so without DEM dominating).
-#   GCP_SIGMA              NOTE 2026-05-21: bundle_adjust does NOT accept
-#                          a --gcp-sigma override; sigmas baked in the
-#                          .gcp file (columns 5,6,7) are authoritative.
-#                          Set GCP_SIGMA at GCP-file CREATION time
-#                          (dem2gcp.sh / trans_gcp.sh) instead.
-#   MAX_PAIRWISE_MATCHES   --max-pairwise-matches (default 6000;
-#                          matches Andrew s bb4_gcp / bc1_gcp recipe).
+#   GCP_SIGMA              bundle_adjust does not accept a --gcp-sigma
+#                          override. The sigmas baked in the .gcp file
+#                          (columns 5,6,7) are authoritative. Set GCP_SIGMA
+#                          at GCP-file creation time (dem2gcp.sh /
+#                          trans_gcp.sh) instead.
+#   MAX_PAIRWISE_MATCHES   --max-pairwise-matches (default 6000).
 #   MAX_GCP_REPROJ_ERR     --max-gcp-reproj-err pixels (default 50).
 #                          Drops GCPs whose reprojection residual is
 #                          larger than this. Catches transformed GCPs

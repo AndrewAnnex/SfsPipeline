@@ -32,7 +32,7 @@ for ((i=0; i<batches; i++)); do
   echo beg=$beg end=$end >> $out
   
   curr_list=tmp_mosaic_list.txt
-  cat $list | ~/bin/print_line_range.pl $beg $end > $curr_list
+  sed -n "$((beg + 1)),${end}p" "$list" > $curr_list
   dem_mosaic --max --tr 10 --dem-list $curr_list -o mosaics/mosaic_${beg}_${end}.tif > $out
 done
 

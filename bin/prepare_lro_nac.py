@@ -56,10 +56,6 @@ def find_fetch_tool():
   cand1 = os.path.join(SCRIPT_DIR, "fetch_lro_nac.sh")
   if os.path.exists(cand1) and os.access(cand1, os.X_OK):
     return cand1
-  # Fall back to ~/bin/fetch_lro_nac.sh
-  cand2 = os.path.expanduser("~/bin/fetch_lro_nac.sh")
-  if os.path.exists(cand2) and os.access(cand2, os.X_OK):
-    return cand2
   # Fall back to PATH
   which_tool = shutil.which("fetch_lro_nac.sh")
   if which_tool:
@@ -99,7 +95,7 @@ def process_product(pid, out_dir, use_polar=False):
   env_isis["ISISROOT"] = ISISROOT
   env_isis["ISISDATA"] = ISISDATA
   env_isis["ALESPICEROOT"] = ISISDATA
-  env_isis["PATH"] = f"{ISISROOT}/bin:{os.path.expanduser('~/bin')}:{env_isis.get('PATH', '')}"
+  env_isis["PATH"] = f"{ISISROOT}/bin:{env_isis.get('PATH', '')}"
 
   # Step 1: If pre-existing uncalibrated .cub exists, rename it to raw.cub
   if os.path.exists(old_cub) and not os.path.exists(raw_cub):

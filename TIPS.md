@@ -69,13 +69,13 @@ duckdb -csv -c "SELECT replace(column0,'.cub', '.map.noba.tif'), replace(column1
 
 
 
-to get a stereo pair list file use the `get_stereo_pairs_from_bundle_adjust.py` script
+to get a stereo pair list file use the `stereo-from-ba` command
 
 ```bash
 # first get the list assuming bundle-adjusted map projected images
-get_stereo_pairs_from_bundle_adjust.py baD/baD ./test_delta/bundle_adjust_components.json --use_ba_mapproj_tifs  --max_residual_error 1.25 --max_mapproj_error 1.75 > ./test_delta/STEREO_PAIR_LIST_BA.txt 
+stereo-from-ba baD/baD ./test_delta/bundle_adjust_components.json --use_ba_mapproj_tifs  --max_residual_error 1.25 --max_mapproj_error 1.75 > ./test_delta/STEREO_PAIR_LIST_BA.txt 
 # and next from raw cameras
-get_stereo_pairs_from_bundle_adjust.py baD/baD ./test_delta/bundle_adjust_components.json --max_residual_error 1.25 --max_mapproj_error 1.75 > ./test_delta/STEREO_PAIR_LIST_NOBA.txt 
+stereo-from-ba baD/baD ./test_delta/bundle_adjust_components.json --max_residual_error 1.25 --max_mapproj_error 1.75 > ./test_delta/STEREO_PAIR_LIST_NOBA.txt 
 ```
 (these files are the IMAGE_PAIR_LIST.txt files to use)
 
@@ -111,13 +111,13 @@ for i in ./*/*DEM.tif; do ; geodiff --threads 8 $i $DEM  -o "${i%/*}/run"; done
 ```
 
 
-### various untested bash commands
+### filtering image lists
 
 ```bash
 # evict images that had high error
 grep -F -x -v -f bad_images.txt all_images.txt
 
-# get good images only (might be kinda useless, just use the good list at this point)
+# keep only the good images (or use the good list directly)
 grep -F -x -f good_images.txt all_images.txt
 ```
 
@@ -138,7 +138,7 @@ for i in ./*/*DEM.half.tif; do; geodiff --threads 8 $i all_dem_mosaic.tif -o "${
 for i in ./*/run-all-diff.tif; do echo $(jim $i) >> diff_all_jim.txt; done
 for i in ./*/*IntersectionErr.tif; do echo $(jim $i) >> inter_all_jim.txt; done 
 # remove diffs with means larger than 10/less than-10
-# remove intersection errors larger than 1 meter mean
+# remove triangulation errors larger than 1 meter mean
 
 
 
@@ -155,11 +155,11 @@ for i in ./*/run-good-diff.tif; do echo $i $(gim $i); done
 ```
 
 ## triangulation error plotting
-I needed more control over error plotting so I AI-slopped the script `triangulation_plot.py`
+The `tri-plot` command plots hillshades and triangulation errors with more control.
 ```bash
 # plot the hillshades
 tri-plot ./*/*DEM.half.tif --hillshade
-# plot the intersection errors
+# plot the triangulation errors
 tri-plot ./*/*IntersectionErr.tif --out-prefix intersec
 ```
 
@@ -183,14 +183,12 @@ pc_align --threads 8 --alignment-method nuth --max-displacement 500 good_dem_mos
 
 ## compute valid pixels for avoiding shadowed images
 
-todo I suspect bundle adjust basically computes this already, but we could potentially
-pre-filter the images we use to ensure at least some of the pixels are actually illuminated after map projection to 
-the reference DEM.
+Pre-filter the images to ensure at least some of the pixels are illuminated
+after mapprojection to the reference DEM.
 
 ```bash
-# todo move to funct
-gdal_calc -A $1.noba.tif --calc="A>0.001" --outfile ~/$1_mask.tif --NoData=0 --type Byte --overwrite --co=COMPRESS=LZW
-gdalinfo ~/$1_mask.tif -stats # get the valid pixels from here
+gdal_calc -A $1.noba.tif --calc="A>0.001" --outfile $1_mask.tif --NoData=0 --type Byte --overwrite --co=COMPRESS=LZW
+gdalinfo $1_mask.tif -stats # get the valid pixels from here
 ```
 
 
@@ -206,12 +204,11 @@ from testing, raising the max 85% error value (column5) past 1 meter didn't add 
 
 
 
-## Collect map projected footprints into a update geodatabase (GPKG) file using new scripts (deprecating lots of steps above)
+## Collect map projected footprints into a GeoPackage (GPKG) database using the footprint-collection scripts
 
 
 ```bash
-# need to make this part easier
-source ~/projects/SfsPipeline/bin/sfs_utilities.sh
+source bin/sfs_utilities.sh
 
 collect_geojson ./IMAGES 'map.baD_align_ref.geojson' > all_map_baD_align_ref_footprints.geojson
 
@@ -220,7 +217,7 @@ collect_geojson ./IMAGES 'map.noba.mask.geojson' > all_map_noba_mask_footprints.
 collect_geojson ./IMAGES 'map.baD_align_ref.mask.geojson' > all_map_baD_align_ref_mask_footprints.geojson
 
 
-update_db_from_footprints.py ./mons_mouton_10k_5m.gpkg ./shadow_mask_mons_mouton_10k_5m.gpkg ./all_map_baD_align_ref_mask_footprints.geojson
+update-db ./footprints.gpkg ./shadow_mask_footprints.gpkg ./all_map_baD_align_ref_mask_footprints.geojson
 
 ```
 

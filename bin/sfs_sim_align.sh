@@ -32,9 +32,9 @@ cd $currDir
 # --save-sim-intensity-only step uses its default starting exposure
 # (~1.0) and does not iterate to refine it, so darker images render
 # as blank sim (all zeros) -> image_align finds no IPs and no GCP
-# can be made. Run sfs_exposures.sh first (or have
-# Andrew s exposures consolidated to one file) and point this var at
-# the prefix such that <prefix>-exposures.txt is the file.
+# can be made. Run sfs_exposures.sh first to produce the exposures file
+# and point this var at the prefix such that <prefix>-exposures.txt is
+# the file.
 if [ -z "${EXPOSURES_PREFIX:-}" ]; then
     echo "ERROR: EXPOSURES_PREFIX env var must be set (path prefix"
     echo "       such that <prefix>-exposures.txt is the file)."

@@ -45,7 +45,7 @@ i=0
 while [ 1 ]; do 
   ((beg=i*w)); ((end=i*w+w)) 
   # Stop when ans is empty
-  ans=$(cat $imageList | ~/bin/print_line_range.pl $beg $end)
+  ans=$(sed -n "$((beg + 1)),${end}p" "$imageList")
   if [ "$ans" = "" ]; then echo "Done with all images"; break; fi
   echo Will do list $imageList from $beg to $end with $dem in $currDir
   # Env vars for cross-machine portability and mapproject configuration:

@@ -91,8 +91,7 @@ fi
 # IMAGE_DIR and IMAGE_SUFFIX are env vars; set them per-site to match
 # your filesystem layout.
 #   Default IMAGE_DIR:    img
-#   Default IMAGE_SUFFIX: .cal.echo.cub   (Earth/Mars LRO NAC examples)
-#   Mons Mouton uses:     IMAGE_DIR=IMAGES  IMAGE_SUFFIX=.ech.cub
+#   Default IMAGE_SUFFIX: .cal.echo.cub
 if [ -z "$IMAGE_DIR" ]; then
     IMAGE_DIR=img
 fi

@@ -14,7 +14,7 @@ binDir="$(cd "$(dirname "$0")" && pwd)"
 #                       <currDir>
 #
 # Args:
-#   tileDir        dir with tile-*.tif from ~/bin/tile.pl
+#   tileDir        dir with tile-*.tif from tile_dem.py
 #   imageList      images-per-line text file (ids or paths, same
 #                  format parallel_sfs.sh expects)
 #   baPrefix       prefix for camera glob (e.g. ba_final/run)
@@ -54,7 +54,7 @@ binDir="$(cd "$(dirname "$0")" && pwd)"
 #     lists/exposures.txt sfs_v1 0 $(pwd)
 #
 # Example (uncertainty pass, tiles from the produced SfS blend):
-#   ~/bin/tile.pl sfs_v1/sfs_dem_blend.tif 4000 4000 tiles_sfs 200
+#   tile_dem.py sfs_v1/sfs_dem_blend.tif 4000 4000 tiles_sfs 200
 #   launch_sfs_tiles.sh                        \
 #     tiles_sfs lists/mapproj_final_selected.txt ba_final/run \
 #     lists/exposures.txt sfs_unc 1 $(pwd)

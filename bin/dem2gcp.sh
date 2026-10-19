@@ -3,12 +3,10 @@
 # Run dem2gcp to create GCPs from a disparity (warped SfS DEM aligned to
 # reference LOLA DEM). Generic wrapper; all paths passed as arguments.
 #
-# NOTE (2026-04-15): this script no longer calls bundle_adjust. In the
-# production Mons Mouton workflow we found that GCP-only BA (no matches)
-# with a large number of GCPs (5M) and a stronger sigma (0.2) gives the
-# best inter-camera consistency. Bundle_adjust is now expected to be run
-# SEPARATELY after this script (e.g. bundle_adjust.sh or
-# a site-specific variant) using the GCP file produced here.
+# This script writes a GCP file only, it does not call bundle_adjust. Run
+# bundle_adjust separately afterward (e.g. bundle_adjust.sh) using the GCP file
+# produced here. GCP-only BA (no matches) with a large number of GCPs (5M) and a
+# stronger sigma (0.2) gives the best inter-camera consistency.
 #
 # Usage:
 #   dem2gcp.sh <sfsDem> <refDem> <disparity> <imageList> <cameraList> \
@@ -76,12 +74,10 @@ echo "Writing log to: $out"
 /bin/rm -fv $out
 
 # Run dem2gcp with clean matches.
-# --gcp-sigma 1.0 aligns with ASP documentation and our production
-# experience. The Mons Mouton work briefly used 0.2 at creation time
-# but ended up re-sigma'd to 1.0 for BA. Per-GCP pull is moderate;
-# total constraint comes from the large --max-num-gcp count.
-# --max-num-gcp 5000000 was the MM-validated value for inter-camera
-# consistency; smaller counts (~500K-2M) were insufficient.
+# --gcp-sigma 1.0 aligns with the ASP documentation. Per-GCP pull is
+# moderate, the total constraint comes from the large --max-num-gcp count.
+# --max-num-gcp 5000000 gives good inter-camera consistency, smaller
+# counts (~500K-2M) can be insufficient.
 dem2gcp                                     \
   --warped-dem $sfsDem                      \
   --ref-dem $refDem                         \

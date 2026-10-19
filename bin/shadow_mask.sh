@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
-##############################################
-# source bashrc
-[ -f ~/.bashrc ] && source ~/.bashrc
-# source asap environment
-source init_sfs.sh
-micromamba activate SfsPipeline
-export PYTHONHOME=$CONDA_PREFIX
-################################################
-# Must have 1 arguments. Print usage on failure.
+# gdal_calc, gdalinfo and gdal_footprint must be on PATH (a StereoPipeline
+# build or a gdal conda env); the checks below enforce this.
+export ASPROOT=${ASPROOT:-$HOME/projects/BinaryBuilder/StereoPipeline}
+export PATH=$ASPROOT/bin:$PATH
+# Must have 2 arguments. Print usage on failure.
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <i> <shadow threshold>"
     exit 1
