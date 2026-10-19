@@ -96,4 +96,4 @@ the surrounding commands. This is just a reference.
 - `filter-db`: downselect a GeoPackage to the product ids in a verify-ba result.
 - `find-stereo`, `stereo-from-ba`, `tri-plot`: optional stereo-survey branch (stereo availability, runnable pairs, triangulation-error plots).
 - `solar-az-plot`: animate footprint coverage by solar azimuth.
-- `wkt-to-ullr`, `wkt-to-projwin`, `wkt-round-out`, `setops`: small geometry and list helpers (see TIPS.md).
+- `wkt-to-ullr`, `wkt-to-projwin`, `wkt-round-out`, `setops`: small geometry and list helpers.

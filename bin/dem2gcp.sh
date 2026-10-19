@@ -76,8 +76,7 @@ echo "Writing log to: $out"
 # Run dem2gcp with clean matches.
 # --gcp-sigma 1.0 aligns with the ASP documentation. Per-GCP pull is
 # moderate, the total constraint comes from the large --max-num-gcp count.
-# --max-num-gcp 5000000 gives good inter-camera consistency, smaller
-# counts (~500K-2M) can be insufficient.
+# --max-num-gcp 1000000 gives good inter-camera consistency.
 dem2gcp                                     \
   --warped-dem $sfsDem                      \
   --ref-dem $refDem                         \
@@ -88,6 +87,6 @@ dem2gcp                                     \
   --max-pairwise-matches 5000               \
   --gcp-sigma $gcpSigma                     \
   --max-disp $maxDisp                       \
-  --max-num-gcp 5000000                     \
+  --max-num-gcp 1000000                     \
   --output-gcp ${gcpFile}                   \
   >> $out 2>&1

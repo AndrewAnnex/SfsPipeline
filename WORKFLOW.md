@@ -215,7 +215,7 @@ nodes (matching parallelizes well, often finishes in a few hours).
 qsub -m n -r n -N ba_match -q normal \
   -W group_list=$groupName -j oe -S /bin/bash \
   -l select=10:ncpus=28:model=bro_ele -l walltime=8:00:00 \
-  -v "IMG_DIR=img,OVERLAP_LIMIT=75,NUM_ITERATIONS=0,PROCESSES=10,THREADS=8" \
+  -v "IMG_DIR=img,OVERLAP_LIMIT=100,NUM_ITERATIONS=0,PROCESSES=10,THREADS=8" \
   -- bundle_adjust.sh lists/filtered_map.txt ref/lola_1mpp.tif maps ba/run $(pwd)
 ```
 
@@ -490,8 +490,8 @@ head-node run would have finished in under two minutes.
 qsub -m n -r n -N jitter -W group_list=$groupName -j oe -S /bin/bash \
   -l select=1:ncpus=28:model=bro_ele -l walltime=8:00:00 \
   -v "NUM_ITER=75,NUM_PASSES=2,NUM_LINES_POS=15000,NUM_LINES_ORIENT=2000,DEM_UNC=20,\
-ANCHOR_DEM_UNC=20,NUM_ANCHOR=5000,MAX_PAIRWISE=5000,MAX_NUM_TRI=120000,\
-MAX_GCP_TO_TRI_RATIO=2.0,MAX_ANCHOR_TO_TRI_RATIO=1.0,\
+ANCHOR_DEM_UNC=20,NUM_ANCHOR=5000,MAX_PAIRWISE=5000,MAX_NUM_TRI=300000,\
+MAX_GCP_TO_TRI_RATIO=2.0,MAX_ANCHOR_TO_TRI_RATIO=4.0,\
 ANCHOR_DEM=ref/lola_1mpp_pad4k.tif" \
   -- jitter_gcp.sh ba_htdem/run-image_list.txt ba_htdem/run-camera_list.txt \
      ref/lola_1mpp.tif sfs_ref_corr/run.gcp ba_htdem/run jitter $(pwd)
@@ -506,14 +506,14 @@ break the `qsub` comma-delimited variable list (the job would then run with a
 single wrong value).
 
 `MAX_NUM_TRI` is the main control: at `--max-gcp-to-tri-points-ratio 2.0` and
-`--max-anchor-points-to-tri-points-ratio 1.0` it sets the GCP cap at twice its
-value and the anchor cap equal to it. `dem2gcp` emits up to 5M GCP, so GCP
+`--max-anchor-points-to-tri-points-ratio 4.0` it sets the GCP cap at twice its
+value and the anchor cap at four times it. `dem2gcp` emits up to 1M GCP, so GCP
 availability never binds, the ratio does. Size it by the number of orientation
 knots, which scales with the image count (knots per image is the image line count
 divided by `NUM_LINES_ORIENT`), not by domain area. A roughly 14 by 10 km lunar-polar site
-with 300 to 1000 full-resolution NAC images runs well around 120k to 150k tri,
-which keeps a few tri per knot and lifts the GCP cap to 240k to 300k, dense enough
-(tens of meters spacing) to resolve a smooth few-meter shift. Fewer or smaller
+with 300 to 1000 full-resolution NAC images runs well around 300k tri,
+which keeps a few tri per knot and lifts the GCP cap to 600k and the anchor cap to
+1.2M, dense enough to resolve a smooth few-meter shift. Fewer or smaller
 images need less, a site larger than about 15 by 15 km, or a longer track with
 more frames, needs more. Read the actual tri, GCP, and anchor counts that
 `jitter_solve` prints at startup on the first run and
@@ -536,10 +536,10 @@ On the final (re-registered) SfS DEM, build the ortho mosaics and blend the DEM
 back toward the reference where there is little illumination signal
 (`sfs_blend.sh`, keeping the tuned parameters from the ASP manual). The blended
 DEM's hillshade is the delivery hillshade. Build it with
-`gdaldem hillshade -multidirectional -compute_edges -alt 10 sfs_dem_blend.tif sfs_dem_blend_hill.tif`,
-which is crisper and shows more shadow detail than ASP `hillshade -e 10`. The
-grazing-light ASP hillshade is kept only for the DEM-to-DEM correlation step, not
-for delivery.
+`gdaldem hillshade -multidirectional -compute_edges -alt 20 sfs_dem_blend.tif sfs_dem_blend_hill.tif`,
+which gives a clean, readable delivery hillshade. A grazing-light hillshade (low
+sun elevation, e.g. ASP `hillshade -e 10`) is kept only for the DEM-to-DEM
+correlation step and for artifact QC, not for delivery.
 
 Both ortho mosaics are delivered, with distinct roles:
 - The **max-lit** mosaic (`dem_mosaic --max`) keeps the brightest pixel per
@@ -694,3 +694,30 @@ rasters, orthos, and cameras are data and are not version-controlled.
 - the two image-id lists (`ba_image_ids_path`, `sfs_image_ids_path`)
 - the two orthoimage directories (1 m/pixel and native-GSD, the latter with a per-image GSD CSV)
 - the SfS-to-LOLA numeric disparity bands (`sfs_to_lola_corr_dh_path`, `sfs_to_lola_corr_dv_path`)
+
+## Recipes
+
+### Stereo pairs for an initial DEM and bundle-adjusted cameras
+
+Running stereo is only necessary when USGS-produced aligned cameras for the site
+are not available. When they exist, use them directly and skip this recipe. The
+ASP SfS documentation covers using these well-registered cameras:
+[Incorporation of well-registered images](https://stereopipeline.readthedocs.io/en/latest/sfs_usage.html#usgs-reg).
+
+Otherwise, build stereo pairs from the bundle-adjustment convergence-angle file,
+which lists the 25th-percentile convergence angle (column 2) and the match count
+(column 5) per image pair. Select the well-converged, well-matched pairs with
+`stereo-from-ba`:
+
+```bash
+stereo-from-ba baD/baD bundle_adjust_components.json --use_ba_mapproj_tifs \
+  --max_residual_error 1.25 --max_mapproj_error 1.75 > STEREO_PAIR_LIST.txt
+```
+
+### Collecting mapprojected footprints into a GeoPackage
+
+```bash
+source bin/sfs_utilities.sh
+collect_geojson ./IMAGES 'map.mask.geojson' > all_mask_footprints.geojson
+update-db ./footprints.gpkg ./shadow_mask_footprints.gpkg ./all_mask_footprints.geojson
+```

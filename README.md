@@ -2,7 +2,7 @@
 
 Scripts supporting the practical operation of Shape-from-Shading (SfS) with the Ames Stereo Pipeline. The reference documentation is the [ASP SfS guide](https://stereopipeline.readthedocs.io/en/latest/sfs_usage.html).
 
-See [WORKFLOW.md](WORKFLOW.md) for an end-to-end example and [TIPS.md](TIPS.md) for handy one-liners.
+See [WORKFLOW.md](WORKFLOW.md) for an end-to-end example.
 
 ## Installation
 
@@ -68,7 +68,7 @@ The pipeline has two layers: lightweight command-line tools (installed as PATH e
 See [SCRIPTS.md](SCRIPTS.md) for the full reference: the bash workers in `bin`
 (grouped by pipeline stage) and the Python command-line tools. Each bash worker
 also prints its own argument list if run with no arguments, and [WORKFLOW.md](WORKFLOW.md)
-shows every step with its `qsub` command. See [TIPS.md](TIPS.md) for handy one-liners.
+shows every step with its `qsub` command.
 
 ## Credits
 

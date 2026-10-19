@@ -59,11 +59,11 @@
 #                               units; set ~20 for a 5-10 m shift to down-weight only outliers)
 #   ORIENTATION_UNC    (0=off)  --orientation-uncertainty (per-pose guard; usually leave off)
 #   Balance caps (ASP build 2026/10+, always passed):
-#   MAX_NUM_TRI          (120000)  --max-num-tri-points (the master knob)
+#   MAX_NUM_TRI          (300000)  --max-num-tri-points (the master knob)
 #   MAX_GCP_TO_TRI_RATIO (2.0)     --max-gcp-to-tri-points-ratio
-#   MAX_ANCHOR_TO_TRI_RATIO (1.0)  --max-anchor-points-to-tri-points-ratio
+#   MAX_ANCHOR_TO_TRI_RATIO (4.0)  --max-anchor-points-to-tri-points-ratio
 #   The GCP and anchor caps are set relative to MAX_NUM_TRI via the ratios.
-#   About 120000 suits a site up to ~15 by 15 km with a few hundred to ~1000 NAC
+#   About 300000 suits a site up to ~15 by 15 km with a few hundred to ~1000 NAC
 #   images. Increase it for larger sites or long tracks with many frames.
 
 set -u
@@ -109,15 +109,15 @@ orientUnc=${ORIENTATION_UNC:-0}
 # GCP and anchor caps are set relative to it via the ratios. SCALE BOTH tri and anchor
 # counts with the site: too few and specific orientation knots fall in the solver null
 # space and blow up (large yaw swings throwing the ground point tens of km) - the solution
-# is good but POORLY CONSTRAINED, not wrong. A ~15 by 15 km / ~1000-image polar site held
-# at 300000 tri x anchor-ratio 4 (about 1.2M anchors); the old 120000 / ratio-2 default
-# left knots starved. Raise MAX_NUM_TRI and the anchor ratio for larger sites or long tracks.
+# is good but poorly constrained, not wrong. A ~15 by 15 km / ~1000-image polar site runs
+# well at the default 300000 tri x anchor-ratio 4 (about 1.2M anchors). Fewer tri or a
+# smaller anchor ratio leaves knots starved. Raise MAX_NUM_TRI and the anchor ratio for larger sites or long tracks.
 # The Ceres problem size (memory) is the control-point TOTAL = MAX_NUM_TRI x (1 + gcp-ratio +
 # anchor-ratio); for a very large site keep that under the solver limit. MAX_PAIRWISE can stay
 # generous (5000) since these caps, not the match count, bound what enters the solve.
-maxNumTri=${MAX_NUM_TRI:-120000}
+maxNumTri=${MAX_NUM_TRI:-300000}
 maxGcpToTriRatio=${MAX_GCP_TO_TRI_RATIO:-2.0}
-maxAnchorToTriRatio=${MAX_ANCHOR_TO_TRI_RATIO:-1.0}
+maxAnchorToTriRatio=${MAX_ANCHOR_TO_TRI_RATIO:-4.0}
 
 # Threads: default to the PBS-allocated core count ($NCPUS); the ASP/VW default
 # (~8 via .vwrc) badly under-uses a full node. Fall back to all physical cores

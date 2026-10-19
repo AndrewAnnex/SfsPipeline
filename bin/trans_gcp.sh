@@ -32,7 +32,7 @@
 #
 # Optional env vars:
 #   GCP_SIGMA      sigma assigned to output GCPs in meters (default 5.0)
-#   MAX_NUM_GCP    max GCP rows to write (default 5000000)
+#   MAX_NUM_GCP    max GCP rows to write (default 1000000)
 #   MAX_DISP       drop input GCP if disparity magnitude exceeds this
 #                  pixel value (default 30; site-dependent)
 #   SEARCH_LEN     DEM pixels to search around a GCP for a valid
@@ -57,7 +57,7 @@ currDir=$1; shift
 cd $currDir
 
 gcpSigma=${GCP_SIGMA:-5.0}
-maxNumGcp=${MAX_NUM_GCP:-5000000}
+maxNumGcp=${MAX_NUM_GCP:-1000000}
 maxDisp=${MAX_DISP:-30}
 searchLen=${SEARCH_LEN:-3}
 
