@@ -89,6 +89,10 @@ echo $dem >> $mlist # must append the DEM
 # use that many iterations as the primary goal is to find matches. Later this
 # can be refined.
 
+# A soft --tri-weight 0.05 with a small --tri-robust-threshold 0.05 keeps the
+# triangulated points from drifting during this free solve, matching the
+# recommended recipe in the ASP sfs_usage documentation.
+
 parallel_bundle_adjust                     \
     --nodes-list $PBS_NODEFILE             \
     --processes $numProcesses              \
@@ -111,6 +115,8 @@ parallel_bundle_adjust                     \
     --remove-outliers-params               \
     "75.0 3.0 100 100"                     \
     --robust-threshold 2                   \
+    --tri-weight 0.05                      \
+    --tri-robust-threshold 0.05            \
     --overlap-limit $overlapLimit          \
     --parameter-tolerance 1e-12            \
     -o $outPrefix                          \
